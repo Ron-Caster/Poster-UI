@@ -13,27 +13,6 @@ DEFAULT_LOGO = os.path.join(APP_DIR, "logo.png")
 POSITIONS_FILE = os.path.join(ROOT, "positions.json")
 
 st.set_page_config(page_title="Poster Generator", layout="wide")
-
-# -- Hide Streamlit default UI elements (header, menu, footer, toolbar) --
-st.markdown(
-    """
-    <style>
-    /* hide hamburger menu (top-right), header, footer and toolbar */
-    #MainMenu {visibility: hidden;}
-    header {visibility: hidden;}
-    footer {visibility: hidden;}
-    [data-testid="stToolbar"] {visibility: hidden;}
-    [data-testid="stHeader"] {visibility: hidden;}
-
-    /* remove extra top padding that may be left behind */
-    [data-testid="stAppViewContainer"] > .main {padding-top: 0rem;}
-
-    /* optional: keep the sidebar intact (no changes) */
-    </style>
-    """,
-    unsafe_allow_html=True,
-)
-
 st.title("Poster Generator — Streamlit UI")
 
 # Load positions if available
