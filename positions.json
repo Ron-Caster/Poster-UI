@@ -1,0 +1,30 @@
+{
+  "background": "background.png",
+  "lines": [
+    "1. World Mental Health Day",
+    "2. Celebrating Courage, Inclusion, and Well-being",
+    "3. Reskilled. Resilient. Ready to Contribute. Empower Neurodiverse Talent. Hire with Heart."
+  ],
+  "positions": {
+    "1": [
+      1657,
+      450
+    ],
+    "2": [
+      1657,
+      701
+    ],
+    "3": [
+      300,
+      2879
+    ],
+    "logo": [
+      2678,
+      2950
+    ]
+  },
+  "logo_size": [
+    900,
+    900
+  ]
+}

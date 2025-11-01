@@ -10,7 +10,7 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 APP_DIR = os.path.dirname(os.path.abspath(__file__))
 DEFAULT_BG = os.path.join(APP_DIR, "background.png")
 DEFAULT_LOGO = os.path.join(APP_DIR, "logo.png")
-POSITIONS_FILE = os.path.join(ROOT, "positions.json")
+POSITIONS_FILE = os.path.join(APP_DIR, "positions.json")
 
 st.set_page_config(page_title="Poster Generator", layout="wide")
 
@@ -254,8 +254,10 @@ def generate_poster(bg, logo, title, subtitle, body, assets, title_size, sub_siz
     # Title: position '1' else top center
     if positions and '1' in positions and title:
         tx, ty = positions['1']
+        # Use position as-is (center point for centering, or top-left if you prefer)
         w, h = text_size(title, title_font)
-        draw_bold_text(draw, (tx - w/2, ty - h/2), title, title_font, fill=(0,80,180), bold_available=True)
+        # Center the text at the given position
+        draw_bold_text(draw, (int(tx - w/2), int(ty - h/2)), title, title_font, fill=(0,80,180), bold_available=True)
     elif title:
         w, h = text_size(title, title_font)
         draw_bold_text(draw, ((canvas.width - w)/2, 150), title, title_font, fill=(0,80,180), bold_available=True)
@@ -264,27 +266,39 @@ def generate_poster(bg, logo, title, subtitle, body, assets, title_size, sub_siz
     if positions and '2' in positions and subtitle:
         sx, sy = positions['2']
         w, h = text_size(subtitle, sub_font)
-        draw_bold_text(draw, (sx - w/2, sy - h/2), subtitle, sub_font, fill=(220,100,0), bold_available=subtitle_has_bold)
+        # Center the text at the given position
+        draw_bold_text(draw, (int(sx - w/2), int(sy - h/2)), subtitle, sub_font, fill=(220,100,0), bold_available=subtitle_has_bold)
     elif subtitle:
         w, h = text_size(subtitle, sub_font)
         draw_bold_text(draw, ((canvas.width - w)/2, 250), subtitle, sub_font, fill=(220,100,0), bold_available=subtitle_has_bold)
 
-    # Body (wrapped)
+    # Body (wrapped) - position '3' is top-left corner for body text
     if body:
-        lines = textwrap.wrap(body, width=40)
+        # Wrap text to fit in left portion of poster (avoiding logo on right)
+        # Calculate wrap width based on canvas width to keep text in left ~60% of poster
+        if positions and '3' in positions:
+            # Estimate characters per line based on font size and available width
+            # Left 60% of canvas minus starting position, divided by approximate char width
+            available_width = int(canvas.width * 0.6)
+            char_width_estimate = body_size * 0.6  # rough estimate
+            wrap_chars = max(30, int(available_width / char_width_estimate))
+        else:
+            wrap_chars = 60
+        
+        lines = textwrap.wrap(body, width=wrap_chars)
         if positions and '3' in positions:
             bx, by = positions['3']
             offset_x = int(bx)
             offset_y = int(by)
             for ln in lines:
                 draw_bold_text(draw, (offset_x, offset_y), ln, body_font, fill=(0,0,0), bold_available=body_has_bold)
-                offset_y += int(body_font.size * 1.2)
+                offset_y += int(body_font.size * 1.3)  # Slightly more spacing
         else:
             offset_x = 100
             offset_y = 400
             for ln in lines:
                 draw_bold_text(draw, (offset_x, offset_y), ln, body_font, fill=(0,0,0), bold_available=body_has_bold)
-                offset_y += int(body_font.size * 1.2)
+                offset_y += int(body_font.size * 1.3)
 
     # Footer if present in positions
     if positions and '4' in positions:
@@ -313,10 +327,12 @@ def generate_poster(bg, logo, title, subtitle, body, assets, title_size, sub_siz
 
         if positions and 'logo' in positions:
             cx, cy = positions['logo']
+            # Center the logo at the given position
             pos_x = int(cx - max_w/2)
             pos_y = int(cy - max_h/2)
             canvas.paste(box, (pos_x, pos_y), box)
         else:
+            # Default: bottom-right corner
             gap = 50
             pos_x = canvas.width - gap - max_w
             pos_y = canvas.height - gap - max_h
