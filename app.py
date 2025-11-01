@@ -119,17 +119,27 @@ def try_load_font(path, size):
 
 def load_font_with_bold(base_path, size, want_bold=False):
     """Try to load a font. If want_bold=True, try common bold variants and return (font, has_bold_flag).
-    Falls back to the base font or PIL default if not found."""
+    Falls back to the base font or system fonts if not found."""
     # Try exact path first
     f = try_load_font(base_path, size)
     base_dir = os.path.dirname(base_path)
     basename = os.path.basename(base_path)
     name_no_ext, ext = os.path.splitext(basename)
+    
+    # If exact path fails, try system font lookup
     if f is None:
-        # try bare name (system font lookup)
         f = try_load_font(name_no_ext + ext, size)
+    
     if not want_bold:
+        # For non-bold requests, try common system fonts as fallback
         if f is None:
+            fallback_fonts = ['arial.ttf', 'Arial.ttf', 'DejaVuSans.ttf', 'LiberationSans-Regular.ttf']
+            for fallback in fallback_fonts:
+                f = try_load_font(fallback, size)
+                if f:
+                    break
+        if f is None:
+            # Last resort: use default but it will be tiny
             return ImageFont.load_default(), False
         return f, True
 
@@ -138,9 +148,12 @@ def load_font_with_bold(base_path, size, want_bold=False):
         name_no_ext + 'bd' + ext,
         name_no_ext + '-bd' + ext,
         name_no_ext + 'b' + ext,
+        name_no_ext + '-Bold' + ext,
         name_no_ext + 'bold' + ext,
-        'arialbd' + ext,
-        'DejaVuSans-Bold' + ext,
+        'arialbd.ttf',
+        'Arial-Bold.ttf',
+        'DejaVuSans-Bold.ttf',
+        'LiberationSans-Bold.ttf',
     ]
     for cand in bold_candidates:
         cand_path = os.path.join(base_dir, cand) if base_dir else cand
@@ -148,7 +161,14 @@ def load_font_with_bold(base_path, size, want_bold=False):
         if bf:
             return bf, True
 
-    # No bold font found; return base or default and indicate bold is unavailable
+    # No bold font found; try regular font as fallback
+    if f is None:
+        fallback_fonts = ['arial.ttf', 'Arial.ttf', 'DejaVuSans.ttf', 'LiberationSans-Regular.ttf']
+        for fallback in fallback_fonts:
+            f = try_load_font(fallback, size)
+            if f:
+                break
+    
     if f is None:
         return ImageFont.load_default(), False
     return f, False
@@ -243,7 +263,7 @@ def generate_poster(bg, logo, title, subtitle, body, assets, title_size, sub_siz
     draw = ImageDraw.Draw(canvas)
 
     # Load fonts with bold support (using same defaults as poster_generator.py)
-    title_font, _ = load_font_with_bold("arialbd.ttf", title_size, want_bold=False)
+    title_font, title_has_bold = load_font_with_bold("arialbd.ttf", title_size, want_bold=True)
     sub_font, subtitle_has_bold = load_font_with_bold("arial.ttf", sub_size, want_bold=True)
     body_font, body_has_bold = load_font_with_bold("arial.ttf", body_size, want_bold=True)
 
@@ -257,10 +277,10 @@ def generate_poster(bg, logo, title, subtitle, body, assets, title_size, sub_siz
         # Use position as-is (center point for centering, or top-left if you prefer)
         w, h = text_size(title, title_font)
         # Center the text at the given position
-        draw_bold_text(draw, (int(tx - w/2), int(ty - h/2)), title, title_font, fill=(0,80,180), bold_available=True)
+        draw_bold_text(draw, (int(tx - w/2), int(ty - h/2)), title, title_font, fill=(0,80,180), bold_available=title_has_bold)
     elif title:
         w, h = text_size(title, title_font)
-        draw_bold_text(draw, ((canvas.width - w)/2, 150), title, title_font, fill=(0,80,180), bold_available=True)
+        draw_bold_text(draw, ((canvas.width - w)/2, 150), title, title_font, fill=(0,80,180), bold_available=title_has_bold)
 
     # Subtitle
     if positions and '2' in positions and subtitle:
